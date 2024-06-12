@@ -13,10 +13,10 @@ servidor.use(express.json());
 servidor.use(express.urlencoded({extended: true}));
 
 
-
 servidor.get("/",function(req,res){
     res.send('Bem vindo ao Servidor!');
 })
+
 
 servidor.post('/cadastrar_usuario',async function(req,res){
     try{
@@ -42,12 +42,25 @@ servidor.post('/cadastrar_usuario',async function(req,res){
 
 })
 
-servidor.post('/login',async function(req,res){
-    Usuario.findOne({where:{nome:req.body.nome}}).then(user => {
-        if(user){
-            console.log()
+servidor.post('/login', async function(req, res) {
+    try {
+        const user = await Usuario.findOne({ where: { email: req.body.email } });
+        if (user) {
+            const match = await byrypt.compare(req.body.senha, user.senha);
+            if (match) {
+                console.log('usuário encontrado no banco de dados');
+                res.status(200).send('Usuário encontrado e senha correta');
+            } else {
+                res.status(401).send('Senha incorreta');
+            }
+        } else {
+            res.status(404).send('Usuário não encontrado');
         }
-    })});
+    } catch (error) {
+        console.error("ERRO AO PROCURAR USUÁRIO: " + error);
+        res.status(500).send('Erro ao procurar usuário');
+    }
+});
 
 
 servidor.listen(PORT,HOST,()=>{
